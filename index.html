@@ -1,0 +1,1044 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chromebook Simulator</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Google Sans', 'Roboto', Arial, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #4285f4, #34a853, #fbbc05, #ea4335);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+        
+        .container {
+            width: 95%;
+            max-width: 1200px;
+            height: 90vh;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+        
+        /* Setup Screens */
+        .screen {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .screen.active {
+            display: flex;
+        }
+        
+        .logo {
+            margin-bottom: 30px;
+        }
+        
+        .logo img {
+            width: 80px;
+            height: 80px;
+        }
+        
+        h1 {
+            font-size: 28px;
+            margin-bottom: 20px;
+            color: #202124;
+        }
+        
+        p {
+            font-size: 16px;
+            color: #5f6368;
+            margin-bottom: 30px;
+            max-width: 500px;
+            line-height: 1.6;
+        }
+        
+        .form-group {
+            width: 100%;
+            max-width: 400px;
+            margin-bottom: 20px;
+        }
+        
+        input, select {
+            width: 100%;
+            padding: 15px;
+            border: 1px solid #dadce0;
+            border-radius: 5px;
+            font-size: 16px;
+            margin-bottom: 20px;
+        }
+        
+        .btn {
+            background-color: #1a73e8;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        .btn:hover {
+            background-color: #1557b1;
+        }
+        
+        /* Desktop Environment */
+        .desktop {
+            display: none;
+            flex-direction: column;
+            height: 100%;
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><rect width="100" height="100" fill="%2334a853" opacity="0.1"/></svg>') #f8f9fa;
+            background-size: cover;
+            position: relative;
+        }
+        
+        .desktop.active {
+            display: flex;
+        }
+        
+        .top-bar {
+            height: 50px;
+            background-color: #1a73e8;
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            color: white;
+            justify-content: space-between;
+        }
+        
+        .time {
+            font-size: 14px;
+        }
+        
+        .system-tray {
+            display: flex;
+            align-items: center;
+        }
+        
+        .system-tray i {
+            margin-left: 15px;
+            font-size: 16px;
+        }
+        
+        .apps-grid {
+            flex: 1;
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            grid-template-rows: repeat(2, 1fr);
+            gap: 30px;
+            padding: 40px;
+        }
+        
+        .app {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        .app:hover {
+            transform: scale(1.05);
+        }
+        
+        .app-icon {
+            width: 50px;
+            height: 50px;
+            background-color: #1a73e8;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 20px;
+            margin-bottom: 10px;
+        }
+        
+        .app-name {
+            font-size: 12px;
+            color: #202124;
+            text-align: center;
+        }
+        
+        .shelf {
+            height: 60px;
+            background-color: rgba(255, 255, 255, 0.8);
+            border-top: 1px solid #dadce0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 0 20px;
+        }
+        
+        .shelf-apps {
+            display: flex;
+            gap: 20px;
+        }
+        
+        .shelf-app {
+            width: 40px;
+            height: 40px;
+            background-color: #1a73e8;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        
+        .launcher {
+            width: 40px;
+            height: 40px;
+            background-color: #1a73e8;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+            margin-right: 20px;
+        }
+        
+        .status-card {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            margin-top: 20px;
+            max-width: 400px;
+        }
+        
+        .wifi-network {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .wifi-network:last-child {
+            border-bottom: none;
+        }
+        
+        .progress-bar {
+            height: 4px;
+            background-color: #eee;
+            border-radius: 2px;
+            margin-top: 10px;
+            overflow: hidden;
+        }
+        
+        .progress {
+            height: 100%;
+            background-color: #1a73e8;
+            width: 70%;
+        }
+        
+        .avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background-color: #1a73e8;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 32px;
+            margin-bottom: 20px;
+        }
+        
+        /* App Windows */
+        .app-window {
+            display: none;
+            position: absolute;
+            top: 60px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80%;
+            height: 75%;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+            z-index: 100;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        .app-window.active {
+            display: flex;
+        }
+        
+        .window-header {
+            height: 40px;
+            background: #f1f3f4;
+            display: flex;
+            align-items: center;
+            padding: 0 15px;
+            justify-content: space-between;
+            border-bottom: 1px solid #dadce0;
+        }
+        
+        .window-title {
+            font-size: 14px;
+            color: #5f6368;
+        }
+        
+        .window-controls {
+            display: flex;
+        }
+        
+        .window-control {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-left: 8px;
+            cursor: pointer;
+        }
+        
+        .close {
+            background-color: #ff5f56;
+        }
+        
+        .minimize {
+            background-color: #ffbd2e;
+        }
+        
+        .maximize {
+            background-color: #27c93f;
+        }
+        
+        .window-content {
+            flex: 1;
+            padding: 20px;
+            overflow: auto;
+        }
+        
+        /* Browser Styles */
+        .browser-url-bar {
+            display: flex;
+            padding: 10px;
+            border-bottom: 1px solid #dadce0;
+        }
+        
+        .browser-url-bar input {
+            flex: 1;
+            padding: 10px;
+            border-radius: 24px;
+            border: 1px solid #dadce0;
+            margin-bottom: 0;
+        }
+        
+        /* Calculator Styles */
+        .calculator {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            grid-gap: 10px;
+            max-width: 300px;
+            margin: 0 auto;
+        }
+        
+        .calc-display {
+            grid-column: span 4;
+            padding: 15px;
+            background: #f1f3f4;
+            border-radius: 5px;
+            text-align: right;
+            font-size: 24px;
+            height: 60px;
+        }
+        
+        .calc-btn {
+            padding: 15px;
+            border: none;
+            border-radius: 5px;
+            background: #f1f3f4;
+            cursor: pointer;
+            font-size: 18px;
+        }
+        
+        .calc-btn.operator {
+            background: #dadce0;
+        }
+        
+        .calc-btn.equals {
+            background: #4285f4;
+            color: white;
+        }
+        
+        /* Files App */
+        .files-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 15px;
+        }
+        
+        .file-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        
+        .file-item:hover {
+            background: #f1f3f4;
+        }
+        
+        .file-icon {
+            font-size: 32px;
+            margin-bottom: 8px;
+            color: #5f6368;
+        }
+        
+        /* Settings App */
+        .settings-menu {
+            display: flex;
+            height: 100%;
+        }
+        
+        .settings-sidebar {
+            width: 200px;
+            border-right: 1px solid #dadce0;
+            padding: 15px 0;
+        }
+        
+        .settings-content {
+            flex: 1;
+            padding: 20px;
+        }
+        
+        .settings-item {
+            padding: 10px 15px;
+            cursor: pointer;
+        }
+        
+        .settings-item.active {
+            background: #e8f0fe;
+            color: #1a73e8;
+        }
+        
+        .settings-option {
+            margin-bottom: 20px;
+        }
+        
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+        }
+        
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 24px;
+        }
+        
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        
+        input:checked + .slider {
+            background-color: #1a73e8;
+        }
+        
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+        
+        /* Overlay for app windows */
+        .overlay {
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 90;
+        }
+        
+        .overlay.active {
+            display: block;
+        }
+        
+        /* Dem-Os App Styles */
+        .dem-os-container {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .dem-os-header {
+            background: #1a73e8;
+            color: white;
+            padding: 15px;
+            text-align: center;
+            font-weight: bold;
+        }
+        
+        .dem-os-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: #f0f4f8;
+            padding: 20px;
+        }
+        
+        .dem-os-icon {
+            font-size: 48px;
+            color: #1a73e8;
+            margin-bottom: 20px;
+        }
+        
+        .dem-os-btn {
+            background: #1a73e8;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            margin: 10px;
+            transition: background-color 0.2s;
+        }
+        
+        .dem-os-btn:hover {
+            background: #1557b1;
+        }
+        
+        .dem-os-window {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            width: 80%;
+            max-width: 500px;
+            text-align: center;
+        }
+        
+        /* Iframe for external content */
+        .app-iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Welcome Screen -->
+        <div class="screen active" id="welcome-screen">
+            <div class="logo">
+                <i class="fab fa-chrome fa-5x" style="color: #1a73e8;"></i>
+            </div>
+            <h1>Welcome to your Chromebook</h1>
+            <p>Get started with your new Chromebook. It's fast, simple, and secure.</p>
+            <button class="btn" onclick="showScreen('language-screen')">Get Started</button>
+        </div>
+        
+        <!-- Language Screen -->
+        <div class="screen" id="language-screen">
+            <div class="logo">
+                <i class="fas fa-globe fa-3x" style="color: #1a73e8;"></i>
+            </div>
+            <h1>Choose your language</h1>
+            <div class="form-group">
+                <select class="input">
+                    <option>English (United States)</option>
+                    <option>Español (Spanish)</option>
+                    <option>Français (French)</option>
+                    <option>Deutsch (German)</option>
+                </select>
+            </div>
+            <button class="btn" onclick="showScreen('keyboard-screen')">Next</button>
+        </div>
+        
+        <!-- Keyboard Screen -->
+        <div class="screen" id="keyboard-screen">
+            <div class="logo">
+                <i class="fas fa-keyboard fa-3x" style="color: #1a73e8;"></i>
+            </div>
+            <h1>Choose your keyboard layout</h1>
+            <div class="form-group">
+                <select class="input">
+                    <option>US Keyboard</option>
+                    <option>UK Keyboard</option>
+                    <option>Spanish Keyboard</option>
+                    <option>French Keyboard</option>
+                </select>
+            </div>
+            <button class="btn" onclick="showScreen('network-screen')">Next</button>
+        </div>
+        
+        <!-- Network Screen -->
+        <div class="screen" id="network-screen">
+            <div class="logo">
+                <i class="fas fa-wifi fa-3x" style="color: #1a73e8;"></i>
+            </div>
+            <h1>Connect to Wi-Fi</h1>
+            <div class="status-card">
+                <div class="wifi-network">
+                    <i class="fas fa-wifi" style="margin-right: 10px;"></i>
+                    <div>
+                        <div>Home Network</div>
+                        <div class="progress-bar">
+                            <div class="progress"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="wifi-network">
+                    <i class="fas fa-wifi" style="margin-right: 10px;"></i>
+                    <div>
+                        <div>Free Public WiFi</div>
+                        <div class="progress-bar">
+                            <div class="progress" style="width: 40%;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <button class="btn" onclick="showScreen('account-screen')">Connect</button>
+        </div>
+        
+        <!-- Account Screen -->
+        <div class="screen" id="account-screen">
+            <div class="logo">
+                <i class="fas fa-user-circle fa-3x" style="color: #1a73e8;"></i>
+            </div>
+            <h1>Sign in with your Google Account</h1>
+            <div class="form-group">
+                <input type="email" placeholder="Email or phone" class="input">
+                <input type="password" placeholder="Enter your password" class="input">
+            </div>
+            <button class="btn" onclick="showDesktop()">Sign In</button>
+        </div>
+        
+        <!-- Desktop Environment -->
+        <div class="desktop" id="desktop">
+            <div class="top-bar">
+                <div class="time" id="time">2:30 PM</div>
+                <div class="system-tray">
+                    <i class="fas fa-wifi"></i>
+                    <i class="fas fa-battery-three-quarters"></i>
+                    <i class="fas fa-cog" onclick="openApp('settings')"></i>
+                </div>
+            </div>
+            
+            <div class="apps-grid">
+                <div class="app" onclick="openApp('chrome')">
+                    <div class="app-icon">
+                        <i class="fab fa-chrome"></i>
+                    </div>
+                    <div class="app-name">Chrome</div>
+                </div>
+                <div class="app" onclick="openApp('gmail')">
+                    <div class="app-icon">
+                        <i class="fas fa-envelope"></i>
+                    </div>
+                    <div class="app-name">Gmail</div>
+                </div>
+                <div class="app" onclick="openApp('docs')">
+                    <div class="app-icon">
+                        <i class="fas fa-file"></i>
+                    </div>
+                    <div class="app-name">Docs</div>
+                </div>
+                <div class="app" onclick="openApp('youtube')">
+                    <div class="app-icon">
+                        <i class="fas fa-play-circle"></i>
+                    </div>
+                    <div class="app-name">YouTube</div>
+                </div>
+                <div class="app" onclick="openApp('drive')">
+                    <div class="app-icon">
+                        <i class="fas fa-cloud"></i>
+                    </div>
+                    <div class="app-name">Drive</div>
+                </div>
+                <div class="app" onclick="openApp('photos')">
+                    <div class="app-icon">
+                        <i class="fas fa-images"></i>
+                    </div>
+                    <div class="app-name">Photos</div>
+                </div>
+                <div class="app" onclick="openApp('calculator')">
+                    <div class="app-icon">
+                        <i class="fas fa-calculator"></i>
+                    </div>
+                    <div class="app-name">Calculator</div>
+                </div>
+                <div class="app" onclick="openApp('maps')">
+                    <div class="app-icon">
+                        <i class="fas fa-map-marker-alt"></i>
+                    </div>
+                    <div class="app-name">Maps</div>
+                </div>
+                <div class="app" onclick="openApp('files')">
+                    <div class="app-icon">
+                        <i class="fas fa-folder"></i>
+                    </div>
+                    <div class="app-name">Files</div>
+                </div>
+                <div class="app" onclick="openApp('demos')">
+                    <div class="app-icon">
+                        <i class="fas fa-desktop"></i>
+                    </div>
+                    <div class="app-name">Dem-Os</div>
+                </div>
+            </div>
+            
+            <div class="shelf">
+                <div class="launcher">
+                    <i class="fas fa-search"></i>
+                </div>
+                <div class="shelf-apps">
+                    <div class="shelf-app" onclick="openApp('chrome')">
+                        <i class="fab fa-chrome"></i>
+                    </div>
+                    <div class="shelf-app" onclick="openApp('gmail')">
+                        <i class="fas fa-envelope"></i>
+                    </div>
+                    <div class="shelf-app" onclick="openApp('files')">
+                        <i class="fas fa-folder"></i>
+                    </div>
+                    <div class="shelf-app" onclick="openApp('demos')">
+                        <i class="fas fa-desktop"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- App Windows -->
+        <div class="overlay" id="overlay" onclick="closeAllApps()"></div>
+        
+        <div class="app-window" id="chrome-window">
+            <div class="window-header">
+                <div class="window-title">Chrome Browser</div>
+                <div class="window-controls">
+                    <div class="window-control minimize"></div>
+                    <div class="window-control maximize"></div>
+                    <div class="window-control close" onclick="closeApp('chrome')"></div>
+                </div>
+            </div>
+            <div class="browser-url-bar">
+                <input type="text" value="https://www.google.com" placeholder="Search Google or type a URL">
+            </div>
+            <div class="window-content">
+                <h2>Google</h2>
+                <p>Search the web from this simulated browser.</p>
+                <p>Try searching for: "Chromebook features" or "Google Workspace"</p>
+            </div>
+        </div>
+        
+        <div class="app-window" id="calculator-window">
+            <div class="window-header">
+                <div class="window-title">Calculator</div>
+                <div class="window-controls">
+                    <div class="window-control minimize"></div>
+                    <div class="window-control maximize"></div>
+                    <div class="window-control close" onclick="closeApp('calculator')"></div>
+                </div>
+            </div>
+            <div class="window-content">
+                <div class="calculator">
+                    <div class="calc-display" id="calc-display">0</div>
+                    <button class="calc-btn" onclick="clearCalc()">C</button>
+                    <button class="calc-btn" onclick="appendToCalc('±')">±</button>
+                    <button class="calc-btn" onclick="appendToCalc('%')">%</button>
+                    <button class="calc-btn operator" onclick="appendToCalc('/')">÷</button>
+                    
+                    <button class="calc-btn" onclick="appendToCalc('7')">7</button>
+                    <button class="calc-btn" onclick="appendToCalc('8')">8</button>
+                    <button class="calc-btn" onclick="appendToCalc('9')">9</button>
+                    <button class="calc-btn operator" onclick="appendToCalc('*')">×</button>
+                    
+                    <button class="calc-btn" onclick="appendToCalc('4')">4</button>
+                    <button class="calc-btn" onclick="appendToCalc('5')">5</button>
+                    <button class="calc-btn" onclick="appendToCalc('6')">6</button>
+                    <button class="calc-btn operator" onclick="appendToCalc('-')">-</button>
+                    
+                    <button class="calc-btn" onclick="appendToCalc('1')">1</button>
+                    <button class="calc-btn" onclick="appendToCalc('2')">2</button>
+                    <button class="calc-btn" onclick="appendToCalc('3')">3</button>
+                    <button class="calc-btn operator" onclick="appendToCalc('+')">+</button>
+                    
+                    <button class="calc-btn" onclick="appendToCalc('0')">0</button>
+                    <button class="calc-btn" onclick="appendToCalc('.')">.</button>
+                    <button class="calc-btn equals" onclick="calculate()">=</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="app-window" id="files-window">
+            <div class="window-header">
+                <div class="window-title">Files</div>
+                <div class="window-controls">
+                    <div class="window-control minimize"></div>
+                    <div class="window-control maximize"></div>
+                    <div class="window-control close" onclick="closeApp('files')"></div>
+                </div>
+            </div>
+            <div class="window-content">
+                <h2>My Files</h2>
+                <div class="files-container">
+                    <div class="file-item">
+                        <div class="file-icon"><i class="fas fa-folder"></i></div>
+                        <div class="file-name">Documents</div>
+                    </div>
+                    <div class="file-item">
+                        <div class="file-icon"><i class="fas fa-folder"></i></div>
+                        <div class="file-name">Downloads</div>
+                    </div>
+                    <div class="file-item">
+                        <div class="file-icon"><i class="fas fa-folder"></i></div>
+                        <div class="file-name">Pictures</div>
+                    </div>
+                    <div class="file-item">
+                        <div class="file-icon"><i class="fas fa-file-pdf"></i></div>
+                        <div class="file-name">Report.pdf</div>
+                    </div>
+                    <div class="file-item">
+                        <div class="file-icon"><i class="fas fa-file-word"></i></div>
+                        <div class="file-name">Essay.docx</div>
+                    </div>
+                    <div class="file-item">
+                        <div class="file-icon"><i class="fas fa-file-excel"></i></div>
+                        <div class="file-name">Budget.xlsx</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="app-window" id="settings-window">
+            <div class="window-header">
+                <div class="window-title">Settings</div>
+                <div class="window-controls">
+                    <div class="window-control minimize"></div>
+                    <div class="window-control maximize"></div>
+                    <div class="window-control close" onclick="closeApp('settings')"></div>
+                </div>
+            </div>
+            <div class="window-content">
+                <div class="settings-menu">
+                    <div class="settings-sidebar">
+                        <div class="settings-item active">Wi-Fi</div>
+                        <div class="settings-item">Bluetooth</div>
+                        <div class="settings-item">Display</div>
+                        <div class="settings-item">Sound</div>
+                        <div class="settings-item">Storage</div>
+                    </div>
+                    <div class="settings-content">
+                        <h2>Wi-Fi Settings</h2>
+                        <div class="settings-option">
+                            <label>Wi-Fi</label>
+                            <label class="toggle-switch">
+                                <input type="checkbox" checked>
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <div class="status-card">
+                            <div class="wifi-network">
+                                <i class="fas fa-wifi" style="margin-right: 10px;"></i>
+                                <div>
+                                    <div>Home Network (Connected)</div>
+                                    <div class="progress-bar">
+                                        <div class="progress"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="wifi-network">
+                                <i class="fas fa-wifi" style="margin-right: 10px;"></i>
+                                <div>
+                                    <div>Free Public WiFi</div>
+                                    <div class="progress-bar">
+                                        <div class="progress" style="width: 40%;"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="app-window" id="gmail-window">
+            <div class="window-header">
+                <div class="window-title">Gmail</div>
+                <div class="window-controls">
+                    <div class="window-control minimize"></div>
+                    <div class="window-control maximize"></div>
+                    <div class="window-control close" onclick="closeApp('gmail')"></div>
+                </div>
+            </div>
+            <div class="window-content">
+                <h2>Gmail Inbox</h2>
+                <p>Welcome to your simulated Gmail!</p>
+                <ul>
+                    <li>Google - Security alert</li>
+                    <li>Twitter - Login code</li>
+                    <li>Netflix - New shows added</li>
+                    <li>Amazon - Your order has shipped</li>
+                </ul>
+            </div>
+        </div>
+        
+        <!-- Dem-Os App Window -->
+        <div class="app-window" id="demos-window">
+            <div class="window-header">
+                <div class="window-title">Dem-Os Desktop Environment</div>
+                <div class="window-controls">
+                    <div class="window-control minimize"></div>
+                    <div class="window-control maximize"></div>
+                    <div class="window-control close" onclick="closeApp('demos')"></div>
+                </div>
+            </div>
+            <div class="window-content" style="padding: 0;">
+                <iframe src="https://slenathomsonur.github.io/Dem-Os/" class="app-iframe" id="demos-iframe"></iframe>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Screen navigation
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(screen => {
+                screen.classList.remove('active');
+            });
+            document.getElementById(screenId).classList.add('active');
+        }
+        
+        function showDesktop() {
+            document.querySelectorAll('.screen').forEach(screen => {
+                screen.classList.remove('active');
+            });
+            document.getElementById('desktop').classList.add('active');
+            updateTime();
+            setInterval(updateTime, 60000);
+        }
+        
+        function updateTime() {
+            const now = new Date();
+            let hours = now.getHours();
+            let minutes = now.getMinutes();
+            const ampm = hours >= 12 ? 'PM' : 'AM';
+            
+            hours = hours % 12;
+            hours = hours ? hours : 12;
+            minutes = minutes < 10 ? '0' + minutes : minutes;
+            
+            const timeString = hours + ':' + minutes + ' ' + ampm;
+            document.getElementById('time').textContent = timeString;
+        }
+        
+        // App functionality
+        function openApp(appName) {
+            document.getElementById('overlay').classList.add('active');
+            document.getElementById(appName + '-window').classList.add('active');
+            
+            // Special handling for Dem-Os iframe
+            if (appName === 'demos') {
+                // Reset the iframe source to ensure it loads
+                document.getElementById('demos-iframe').src = "https://slenathomsonur.github.io/Dem-Os/";
+            }
+        }
+        
+        function closeApp(appName) {
+            document.getElementById('overlay').classList.remove('active');
+            document.getElementById(appName + '-window').classList.remove('active');
+        }
+        
+        function closeAllApps() {
+            document.getElementById('overlay').classList.remove('active');
+            document.querySelectorAll('.app-window').forEach(window => {
+                window.classList.remove('active');
+            });
+        }
+        
+        // Calculator functionality
+        let calcValue = '0';
+        let calculated = false;
+        
+        function updateCalcDisplay() {
+            document.getElementById('calc-display').textContent = calcValue;
+        }
+        
+        function appendToCalc(input) {
+            if (calculated || calcValue === '0') {
+                calcValue = input;
+                calculated = false;
+            } else {
+                calcValue += input;
+            }
+            updateCalcDisplay();
+        }
+        
+        function clearCalc() {
+            calcValue = '0';
+            updateCalcDisplay();
+        }
+        
+        function calculate() {
+            try {
+                calcValue = eval(calcValue).toString();
+            } catch (e) {
+                calcValue = 'Error';
+            }
+            calculated = true;
+            updateCalcDisplay();
+        }
+        
+        // Initialize with welcome screen
+        document.addEventListener('DOMContentLoaded', function() {
+            showScreen('welcome-screen');
+        });
+    </script>
+</body>
+</html>
